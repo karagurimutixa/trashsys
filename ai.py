@@ -3,8 +3,8 @@ import boto3
 
 # AWS Rekognition client ayarları
 client = boto3.client('rekognition',
-                      aws_access_key_id='AKIAUGHADVUZYNQV3AP6',
-                      aws_secret_access_key='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',
+                      aws_access_key_id='AWSACCESSKEY',
+                      aws_secret_access_key='AWSSECRETKEY',
                       region_name='us-east-1')
 
 # Çöp türü etiketleri (örnek)
