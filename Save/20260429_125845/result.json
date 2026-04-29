@@ -1,0 +1,22 @@
+[
+    {
+        "name": "Bottle",
+        "confidence": 100.0,
+        "is_trash": true
+    },
+    {
+        "name": "Water Bottle",
+        "confidence": 99.94,
+        "is_trash": false
+    },
+    {
+        "name": "Beverage",
+        "confidence": 99.72,
+        "is_trash": false
+    },
+    {
+        "name": "Mineral Water",
+        "confidence": 99.72,
+        "is_trash": false
+    }
+]

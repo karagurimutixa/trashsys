@@ -1,4 +1,28 @@
-This Model is the Advanced Version of the v.5 of the Trash System.
+# TRASH RECOGNITION SYSTEM V1
 
-## Made by Çınar Yalçınkaya!
-## Made With Diacronia & Web Geliştirme Meclisi
+## REQUIRED:
+- PYTHON
+
+- AWS ACCOUNT
+
+- IAM ACCOUNT
+
+## SETUP:
+
+### Downloading The Repo
+`git clone https://github.com/karagurimutixa/trashsys.git`
+
+
+### Downloading The Packages
+`pip install boto3 opencv-python numpy python-dotenv`
+
+
+### Setting Up The Enviroment
+With the .env.example file setup your enviroment.
+
+## Starting
+
+`python ai.py`
+
+## Developers and Maintainers:
+@Karagurimuti
