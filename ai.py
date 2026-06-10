@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import cv2
 import boto3
 from dotenv import load_dotenv
@@ -8,8 +7,18 @@ from datetime import datetime
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import platform
+import serial
+import time
 
 load_dotenv()
+
+try:
+    arduino = serial.Serial("COM5", 9600, timeout=1)
+    time.sleep(2)
+    print("Arduino bağlandı.")
+except Exception as e:
+    print("Arduino bağlanamadı:", e)
+    arduino = None
 
 # Load DEBUG_MODE from environment
 debug_mode = os.getenv("DEBUG_MODE", "false").lower() in ("true", "1", "yes")
@@ -38,6 +47,41 @@ trash_color_mapping = {
     "Paper": (0, 255, 0),        # Green - Organic/Compostable
     "Cardboard": (0, 255, 0),    # Green - Organic/Compostable
 }
+
+
+pin_mapping = {
+    "Battery": 2,      # Red
+    "Trash": 4,        # Green
+    "Garbage": 4,      # Green
+    "Can": 3,          # Blue
+    "Bottle": 3,       # Blue
+    "Plastic": 3,      # Blue
+    "Paper": 4,        # Green
+    "Cardboard": 4     # Green
+}
+
+current_pin = None
+last_buzzer_time = 0
+
+
+def serial_send(command):
+    global arduino
+
+    if arduino is None:
+        return
+
+    try:
+        arduino.write((command + "\n").encode())
+    except Exception as e:
+        print("Serial Error:", e)
+
+
+def activate_pin(pin):
+    serial_send(f"ON {pin}")
+
+
+def deactivate_pin(pin):
+    serial_send(f"OFF {pin}")
 
 # States for debug mode
 if debug_mode:
@@ -216,6 +260,8 @@ def save_result(raw_frame, labels):
 
 
 def main():
+    global current_pin
+    global last_buzzer_time
     if platform.system() == "Windows":
       cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     else:
@@ -312,7 +358,7 @@ def main():
                     # --- Refresh camera completely ---
                     cv2.destroyAllWindows()                    # close all windows
                     cap.release()                              # close old stream
-                    cap = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)  # open fresh one
+                    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW) if platform.system() == "Windows" else cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)
                     if not cap.isOpened():
                         print("Kamera yeniden açılamadı.")
                         break
@@ -346,6 +392,25 @@ def main():
             elif state == STATE_RESULT:
                 display = draw_result_screen(canvas.copy(), frozen_labels)
                 cv2.imshow("TrashSys", display)
+
+                trash_items = [l for l in frozen_labels if l["Name"] in trash_labels]
+
+                if trash_items:
+                    top_item = max(trash_items, key=lambda x: x["Confidence"])
+                    pin = pin_mapping.get(top_item["Name"])
+
+                    if current_pin != pin:
+                        if current_pin is not None:
+                            deactivate_pin(current_pin)
+
+                        activate_pin(pin)
+                        current_pin = pin
+
+                    now = time.time()
+
+                    if now - last_buzzer_time >= 2:
+                        serial_send("BUZZ")
+                        last_buzzer_time = now
 
             key = cv2.waitKey(1) & 0xFF
 
@@ -386,6 +451,11 @@ def main():
             # ================= RESULT STATE =================
             elif state == STATE_RESULT:
                 if key == 32:  # SPACE → back to instruction
+
+                    if current_pin is not None:
+                        deactivate_pin(current_pin)
+                        current_pin = None
+
                     state = STATE_INSTRUCTION
                     frozen_labels = None
                     frame = None
