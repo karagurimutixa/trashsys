@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+import platform
 
 load_dotenv()
 
@@ -215,12 +216,10 @@ def save_result(raw_frame, labels):
 
 
 def main():
-    # macOS stable backend
-    cap = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)
-
-    if not cap.isOpened():
-        print("Kamera açılamadı.")
-        return
+    if platform.system() == "Windows":
+      cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    else:
+     cap = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)
 
     if debug_mode:
         # ===== DEBUG MODE =====
